@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>{{ classroom.name }} - {{ pretty }}</h2>
+<p>Select a Subject:</p>
+<div class="classes">
+  {% for subject in subjects %}
+    <a class="class-card" href="{% url 'subject_files' category classroom.id subject.id %}">{{ subject.name }}</a>
+  {% empty %}
+    <p>No subjects available yet for this class.</p>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="search-section">
+  <div class="container">
+    <h2>Search Results</h2>
+    
+    <!-- Search Form -->
+    <form method="get" class="search-form">
+      <div class="search-input-group">
+        <input type="text" name="q" value="{{ query|default:'' }}" placeholder="Search for files, classes, or subjects..." required>
+        <button type="submit" class="btn">Search</button>
+      </div>
+    </form>
+    
+    {% if query %}
+      <h3>Results for "{{ query }}":</h3>
+      
+      {% if files %}
+        <div class="file-list">
+          {% for file in files %}
+            <div class="file-item">
+              <div class="file-info">
+                <h4>{{ file.title }}</h4>
+                <div class="file-meta">
+                  <span class="class-info">{{ file.classroom.name }}</span>
+                  {% if file.subject %}
+                    <span class="subject-info">{{ file.subject.name }}</span>
+                  {% endif %}
+                  <span class="category-info">{{ file.get_category_display }}</span>
+                  <span class="upload-date">Uploaded: {{ file.uploaded_at|date:'j M Y, H:i' }}</span>
+                </div>
+              </div>
+              <div class="file-actions">
+                <a class="btn download-btn" href="{{ file.file.url }}" download>Download</a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p>No files found matching your search criteria.</p>
+        <p>Try different keywords or browse our categories:</p>
+        <div class="categories">
+            {% for key, label in categories %}
+              <a class="card {{ key }}" href="{% url 'category' key %}">
+                <span class="icon">
+                  {% if key == 'mcqs' %}🧠
+                  {% elif key == 'sample_paper' %}📄
+                  {% elif key == 'ncert_solutions' %}📘
+                  {% elif key == 'ncert_textbook' %}📚
+                  {% elif key == 'extra_questions' %}✍️
+                  {% elif key == 'previous_year' %}📊
+                  {% endif %}
+                </span>
+                <span class="label">{{ label }}</span>
+              </a>
+            {% endfor %}
+          </div>
+      {% endif %}
+    {% else %}
+      <p>Enter a search term to find files, classes, or subjects.</p>
+      <div class="categories">
+            {% for key, label in categories %}
+              <a class="card {{ key }}" href="{% url 'category' key %}">
+                <span class="icon">
+                  {% if key == 'mcqs' %}🧠
+                  {% elif key == 'sample_paper' %}📄
+                  {% elif key == 'ncert_solutions' %}📘
+                  {% elif key == 'ncert_textbook' %}📚
+                  {% elif key == 'extra_questions' %}✍️
+                  {% elif key == 'previous_year' %}📊
+                  {% endif %}
+                </span>
+                <span class="label">{{ label }}</span>
+              </a>
+            {% endfor %}
+          </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

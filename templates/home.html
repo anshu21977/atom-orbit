@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<!-- HERO / CATEGORIES -->
+<section class="hero">
+  <h2>Welcome to ATOM ORBIT</h2>
+  <p>Choose a category to browse PDFs for your class.</p>
+
+  <div class="categories">
+    {% for key,label in categories %}
+      <a class="card {{ key }}" href="{% url 'category' key %}">
+        <span class="icon">
+          {% if key == 'mcqs' %}🧠
+          {% elif key == 'sample_paper' %}📄
+          {% elif key == 'ncert_solutions' %}📘
+          {% elif key == 'ncert_textbook' %}📚
+          {% elif key == 'extra_questions' %}✍️
+          {% elif key == 'previous_year' %}📊
+          {% endif %}
+        </span>
+        <span class="label">{{ label }}</span>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+
+
+<!-- INTRO -->
+<section class="introduction">
+  <div class="container">
+    <div class="intro-container fade-up">
+
+      <h2 class="typing-text"></h2>
+
+      <p class="intro-text">
+        At <span class="highlight">Atom Orbit</span>, we believe learning should be 
+        <span class="highlight">exciting</span>, 
+        <span class="highlight">engaging</span>, and 
+        <span class="highlight">meaningful</span>.
+      </p>
+
+      <p class="intro-text delay">
+        We provide high-quality education for students from 
+        <span class="highlight">Class 1 to Class 12</span>.
+      </p>
+
+      <p class="intro-text delay-2">
+        We combine structured learning with 
+        <span class="highlight">interactive teaching</span>, 
+        <span class="highlight">real-life examples</span>, and 
+        <span class="highlight">hands-on experiments</span>.
+      </p>
+
+      <p class="intro-text final-line delay-3">
+        Learn smarter. Explore deeper. Grow stronger. ✨
+      </p>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ACHIEVERS -->
+<section class="achievements">
+  <h2>🏆 Our Achievers</h2>
+
+  <div class="home-achievement-grid">
+    {% for student in achievers %}
+    <div class="home-achievement-card">
+      <img src="{{ student.image.url }}" alt="{{ student.name }}">
+      <h3>{{ student.name }}</h3>
+      <p>Class {{ student.class_name }}</p>
+      <span>{{ student.score }}%</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="view-more">
+    <a href="{% url 'all_achievers' %}">View More →</a>
+  </div>
+</section>
+
+
+<!-- CTA -->
+<section class="cta">
+  <div class="container">
+    <h2>Ready to Start Your Learning Journey?</h2>
+    <p>Join hundreds of successful students!</p>
+
+    <div class="cta-buttons">
+      <a href="/contact/" class="btn btn-large">Enroll Now</a>
+      <a href="/category/sample_paper/" class="btn btn-outline">View Sample Papers</a>
+    </div>
+  </div>
+</section>
+
+
+<!-- SOCIAL -->
+<section class="social-media">
+  <div class="container">
+    <h2>Connect With Us</h2>
+
+    <div class="social-links">
+      <a href="https://instagram.com/atom.orbit" target="_blank" class="social-link">
+        📷 Instagram
+      </a>
+
+      <a href="https://t.me/atomorbit" target="_blank" class="social-link">
+        ✈️ Telegram
+      </a>
+
+      <a href="https://www.youtube.com/@Atom_Orbit" target="_blank" class="social-link">
+        📺 YouTube
+      </a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+
+{% block javascript %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  // SAFE CHECK (prevents crash)
+  const galleryItems = document.querySelectorAll('.gallery-item');
+
+  if (galleryItems.length > 0) {
+    const modal = document.getElementById('gallery-modal');
+    const modalImg = document.getElementById('modal-image');
+
+    galleryItems.forEach(item => {
+      item.addEventListener('click', function () {
+        const img = this.querySelector('img');
+        modal.style.display = 'block';
+        modalImg.src = img.src;
+      });
+    });
+  }
+
+});
+</script>
+{% endblock %}

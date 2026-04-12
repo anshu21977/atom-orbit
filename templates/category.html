@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>{{ pretty }}</h2>
+<p>Select your Class:</p>
+<div class="classes">
+  {% for c in classes %}
+    <a class="class-card" href="{% url 'class_subjects' category c.id %}">{{ c.name }}</a>
+  {% empty %}
+    <p>No classes available yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}

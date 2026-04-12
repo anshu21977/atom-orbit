@@ -1,0 +1,206 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>WELCOME TO ATOM ORBIT</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" type="image/jpeg" href="{% static 'img/logo.ico' %}">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="loader" class="loader"></div>
+  <header class="site-header">
+    <div class="container nav-row">
+      <a class="logo" href="/"> 
+        <!-- responsive SVG logo -->
+        <img src="/static/img/logo.jpeg" alt="logo" class="logo-img">
+        <div class="logo-text">
+          <h1>ATOM ORBIT</h1>
+          <small>LEARN WITH FUN</small>
+        </div>
+      </a>
+      <nav class="main-nav">
+        <a href="/">Home</a>
+        <a href="/contact/">Contact</a>
+      </nav>
+      <!-- Search Form -->
+      <div class="nav-right">
+        <!-- SEARCH -->
+        <div class="search-container">
+          <form method="get" action="{% url 'search' %}" class="search-form">
+            <input type="text" name="q" placeholder="Search files..." value="{{ query|default:'' }}" autocomplete="off">
+            <button type="submit">🔍</button>
+          </form>
+          
+          <!-- LIVE SEARCH -->
+          <div id="live-results" class="live-results"></div>
+        </div>
+
+        <!-- DARK MODE TOGGLE -->
+        <button id="dark-mode-toggle" class="dark-mode-toggle">
+          <span class="sun-icon">☀️</span>
+          <span class="moon-icon">🌙</span>
+        </button>
+        
+        <!-- MOBILE MENU -->
+        <button id="nav-toggle" class="nav-toggle">☰</button>
+      </div>
+    </div>
+  </header>
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="site-footer">
+    <div class="container">
+      © ATOM ORBIT - All rights reserved.
+    </div>
+  </footer>
+  <script>
+  // simple nav toggle for small screens
+  const btn = document.getElementById('nav-toggle');
+  if(btn){
+    btn.addEventListener('click', ()=>{
+      document.querySelector('.main-nav').classList.toggle('open');
+    });
+  }
+  
+  // Dark mode toggle functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const toggleButton = document.getElementById('dark-mode-toggle');
+    const sunIcon = document.querySelector('.sun-icon');
+    const moonIcon = document.querySelector('.moon-icon');
+    
+    // Check for saved theme preference or respect OS preference
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+    
+    // Apply initial theme
+    if (initialTheme === 'dark') {
+      document.body.classList.add('dark-mode');
+      moonIcon.style.display = 'none';
+      sunIcon.style.display = 'inline';
+    } else {
+      moonIcon.style.display = 'inline';
+      sunIcon.style.display = 'none';
+    }
+    
+    // Toggle theme on button click
+    toggleButton.addEventListener('click', function() {
+      document.body.classList.toggle('dark-mode');
+      
+      // Update button icon
+      if (document.body.classList.contains('dark-mode')) {
+        moonIcon.style.display = 'none';
+        sunIcon.style.display = 'inline';
+        localStorage.setItem('theme', 'dark');
+      } else {
+        moonIcon.style.display = 'inline';
+        sunIcon.style.display = 'none';
+        localStorage.setItem('theme', 'light');
+      }
+    });
+  });
+  </script>
+  
+  <!-- JavaScript block for pages to add their own scripts -->
+  {% block javascript %}{% endblock %}
+
+<script>
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('show');
+    }
+  });
+});
+
+document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+</script>
+<script>
+const searchInput = document.querySelector('input[name="q"]');
+const resultsBox = document.getElementById('live-results');
+
+searchInput.addEventListener('input', function() {
+    let query = this.value;
+
+    if (query.length < 2) {
+        resultsBox.innerHTML = '';
+        return;
+    }
+
+    fetch(`/live-search/?q=${query}`)
+        .then(res => res.json())
+        .then(data => {
+            resultsBox.innerHTML = '';
+
+            data.forEach(item => {
+                resultsBox.innerHTML += `
+                    <div class="live-item">
+                        📄 <a href="${item.url}">
+                            <strong>${item.title}</strong>
+                        </a>
+                    </div>
+                `;
+            });
+        });
+});
+</script>
+<script>
+window.addEventListener('scroll', function() {
+  const header = document.querySelector('.site-header');
+  header.classList.toggle('scrolled', window.scrollY > 10);
+});
+</script>
+<script>
+window.addEventListener('load', function() {
+  document.getElementById('loader').style.display = 'none';
+});
+</script>
+<script>
+const text = "Welcome to ATOM ORBIT 🚀";
+const typingElement = document.querySelector('.typing-text');
+
+let index = 0;
+
+function typeEffect() {
+  if (index < text.length) {
+    typingElement.innerHTML += text.charAt(index);
+    index++;
+    setTimeout(typeEffect, 50);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", typeEffect);
+</script>
+<script>
+document.addEventListener("contextmenu", function(e) {
+    e.preventDefault();
+});
+</script>
+<script>
+document.onkeydown = function(e) {
+  if (e.keyCode == 123) return false; // F12
+  if (e.ctrlKey && e.shiftKey && e.keyCode == 73) return false; // Ctrl+Shift+I
+};
+</script>
+<script>
+document.querySelectorAll('.card').forEach(card => {
+  card.addEventListener('click', function(e) {
+    const circle = document.createElement('span');
+    circle.classList.add('ripple');
+
+    const rect = this.getBoundingClientRect();
+    circle.style.left = (e.clientX - rect.left) + 'px';
+    circle.style.top = (e.clientY - rect.top) + 'px';
+
+    this.appendChild(circle);
+
+    setTimeout(() => circle.remove(), 600);
+  });
+});
+</script>
+</body>
+</html>

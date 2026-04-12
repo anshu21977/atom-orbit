@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h2>{{ classroom.name }} - {{ subject.name }} - {{ pretty }}</h2>
+
+{% if files %}
+  <div class="file-list">
+    {% for f in files %}
+
+    <div class="file-card">
+
+      <div class="file-left">
+        <div class="file-icon">📄</div>
+      </div>
+
+      <div class="file-content">
+        <h3 class="file-title">{{ f.title }}</h3>
+        
+        <div class="file-meta">
+          <span>📚 {{ f.classroom.name }}</span>
+          {% if f.subject %}
+            <span>📘 {{ f.subject.name }}</span>
+          {% endif %}
+          <span>📂 {{ f.get_category_display }}</span>
+        </div>
+      </div>
+
+      <div class="file-action">
+        <!-- ✅ SECURE DOWNLOAD -->
+        <a href="{% url 'secure_download' f.id %}" class="download-btn">
+          ⬇ Download
+        </a>
+
+        <!-- OPTIONAL DOWNLOAD COUNT -->
+        {% if f.download_count %}
+          <span>⬇ {{ f.download_count }} downloads</span>
+        {% endif %}
+      </div>
+
+    </div>
+
+    {% endfor %}
+  </div>
+{% else %}
+  <p>No files available.</p>
+{% endif %}
+
+{% endblock %}
