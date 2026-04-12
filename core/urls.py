@@ -20,6 +20,5 @@ urlpatterns = [
     path('files/<int:id>/', views.file_detail, name='file_detail'),
     path('load-subjects/', views.load_subjects, name='load_subjects'),
     path('achievers/', views.all_achievers, name='all_achievers'),
-    path('files/<int:id>/', views.serve_pdf, name='serve_pdf'),
     path('download/<int:file_id>/', views.secure_download, name='secure_download'),
 ]

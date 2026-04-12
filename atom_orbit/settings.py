@@ -2,8 +2,8 @@ import os
 from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'REPLACE_THIS_WITH_A_SECURE_KEY'
-DEBUG = True
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.spurlike-zandra-connotively.ngrok-free.dev']
+DEBUG = False
+ALLOWED_HOSTS = ['*']
 # Email configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
@@ -29,6 +29,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 ROOT_URLCONF = 'atom_orbit.urls'
 TEMPLATES = [
@@ -60,6 +61,7 @@ USE_I18N = True
 USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -71,3 +73,38 @@ CSRF_COOKIE_SECURE = False
 SESSION_COOKIE_SECURE = False
 
 SECURE_SSL_REDIRECT = False
+ADMIN_ALLOWED_IPS = ['127.0.0.1']
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
+    }
+}
+
+# ================= SECURITY =================
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+
+SECURE_SSL_REDIRECT = False  # keep False for now
+
+# ================= STATIC FILES =================
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# ================= CACHE =================
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique",
+    }
+}
+
+# ================= FILE LIMIT =================
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880
+
+# ================= EXTRA SECURITY =================
+SECURE_REFERRER_POLICY = "same-origin"

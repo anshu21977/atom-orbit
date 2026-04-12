@@ -18,6 +18,7 @@ from .models import Subject
 from django.http import FileResponse, Http404
 import os
 from django.db.models import F
+from django.views.decorators.cache import cache_page
 
 
 def home(request):
@@ -260,17 +261,34 @@ def all_achievers(request):
 
 
 
-def serve_pdf(request, id):
-    file = PDFFile.objects.get(id=id)
+from django.views.decorators.http import require_GET
 
-    # ✅ increment download count
-    file.download_count += 1
-    file.save()
+@require_GET
+def secure_download(request, file_id):
+    try:
+        file = PDFFile.objects.get(id=file_id)
 
-    response = FileResponse(file.file.open(), content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="{file.title}.pdf"'
-    
-    return response
+        # increment safely
+        PDFFile.objects.filter(id=file_id).update(
+            download_count=F('download_count') + 1
+        )
+
+        file_path = file.file.path
+
+        if not os.path.exists(file_path):
+            raise Http404
+
+        # clean filename
+        safe_title = re.sub(r'[^a-zA-Z0-9 ]', '', file.title)
+        filename = f"{safe_title}.pdf"
+
+        response = FileResponse(open(file_path, 'rb'), as_attachment=True)
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        return response
+
+    except PDFFile.DoesNotExist:
+        raise Http404
 
 
 def secure_download(request, file_id):
@@ -295,8 +313,24 @@ def secure_download(request, file_id):
 
         # 🔥 THIS LINE CONTROLS DOWNLOAD NAME
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
-
         return response
 
     except PDFFile.DoesNotExist:
         raise Http404
+
+
+@cache_page(60 * 5)  # 5 minutes
+def home(request):
+    achievers = Achiever.objects.order_by('-created_at')[:6]
+    categories = [
+        ('mcqs', 'MCQs'),
+        ('sample_paper','Sample Papers'),
+        ('ncert_solutions','NCERT Solutions'),
+        ('ncert_textbook','NCERT Textbooks'),
+        ('extra_questions', 'Extra Questions'),
+        ('previous_year', 'Previous Year Questions'),
+    ]
+    return render(request,'home.html',{
+        'achievers': achievers,
+        'categories': categories
+    })
