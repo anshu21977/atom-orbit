@@ -1,9 +1,12 @@
 import os
 from pathlib import Path
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'REPLACE_THIS_WITH_A_SECURE_KEY'
 DEBUG = False
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['atom-orbit.onrender.com']
 # Email configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
@@ -63,7 +66,6 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
@@ -108,3 +110,11 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880
 
 # ================= EXTRA SECURITY =================
 SECURE_REFERRER_POLICY = "same-origin"
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'dqqdhfvhr',
+    'API_KEY': '615224925723566',
+    'API_SECRET': 'U7pNq9ayeb9wyi7U2G6bHNIpT58',
+}
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+INSTALLED_APPS += ['cloudinary', 'cloudinary_storage']
