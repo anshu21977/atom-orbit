@@ -19,7 +19,10 @@ from django.http import FileResponse, Http404
 import os
 from django.db.models import F
 from django.views.decorators.cache import cache_page
-
+from django.http import HttpResponse
+import time
+import hashlib
+from django.conf import settings
 
 def home(request):
     categories = [
@@ -80,16 +83,29 @@ def class_subjects(request, category, class_id):
 def subject_files(request, category, class_id, subject_id):
     classroom = get_object_or_404(ClassRoom, pk=class_id)
     subject = get_object_or_404(Subject, pk=subject_id)
+
     files = PDFFile.objects.filter(classroom=classroom, subject=subject, category=category)
+
+    # 🔥 ADD TOKEN TO EACH FILE
+    for f in files:
+        f.token = generate_token(f.id)
+
     pretty = dict(
         mcqs='MCQs',
         sample_paper='Sample Papers',
         ncert_solutions='NCERT Solutions',
         ncert_textbook='NCERT Textbooks',
-        extra_questions='Extra Questions',              # ✅ ADD
-        previous_year='Previous Year Questions',        # ✅ ADD
+        extra_questions='Extra Questions',
+        previous_year='Previous Year Questions',
     ).get(category, category)
-    return render(request,'files.html',{'classroom':classroom,'subject':subject,'files':files,'category':category,'pretty':pretty})
+
+    return render(request,'files.html',{
+        'classroom':classroom,
+        'subject':subject,
+        'files':files,
+        'category':category,
+        'pretty':pretty
+    })
 
 # ---------- AUTH ----------
 def admin_login(request):
@@ -291,32 +307,23 @@ def secure_download(request, file_id):
         raise Http404
 
 
-def secure_download(request, file_id):
-    try:
-        file = PDFFile.objects.get(id=file_id)
+def secure_download(request, file_id, token):
+    file = PDFFile.objects.get(id=file_id)
 
-        # ✅ Increase download count
-        PDFFile.objects.filter(id=file_id).update(
-            download_count=F('download_count') + 1
-        )
+    # ✅ validate token
+    valid_token = generate_token(file_id)
 
-        file_path = file.file.path
+    if token != valid_token:
+        raise Http404("Invalid or expired link")
 
-        if not os.path.exists(file_path):
-            raise Http404
+    # ✅ increase count
+    file.download_count += 1
+    file.save()
 
-        # ✅ USE ADMIN TITLE (IMPORTANT)
-        safe_title = re.sub(r'[^a-zA-Z0-9 ]', '', file.title)
-        filename = f"{safe_title}.pdf"
-
-        response = FileResponse(open(file_path, 'rb'), as_attachment=True)
-
-        # 🔥 THIS LINE CONTROLS DOWNLOAD NAME
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
-        return response
-
-    except PDFFile.DoesNotExist:
-        raise Http404
+    response = FileResponse(file.file.open(), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{file.title}.pdf"'
+    
+    return response
 
 
 @cache_page(60 * 5)  # 5 minutes
@@ -334,3 +341,12 @@ def home(request):
         'achievers': achievers,
         'categories': categories
     })
+
+def robots_txt(request):
+    return HttpResponse("User-agent: *\nAllow: /", content_type="text/plain")
+
+def generate_token(file_id):
+    secret = settings.SECRET_KEY
+    timestamp = str(int(time.time() // 60))  # changes every minute
+    data = f"{file_id}{timestamp}{secret}"
+    return hashlib.sha256(data.encode()).hexdigest()

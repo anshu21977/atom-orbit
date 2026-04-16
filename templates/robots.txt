@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://atom-orbit.onrender.com/sitemap.xml

@@ -4,16 +4,31 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>WELCOME TO ATOM ORBIT</title>
-  <link rel="stylesheet" href="/static/css/style.css">
-  <link rel="icon" type="image/jpeg" href="{% static 'img/logo.ico' %}">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-  <meta name="description" content="Atom Orbit - Best platform for MCQs, Sample Papers, NCERT Solutions from Class 1 to 12.">
-  <meta name="keywords" content="MCQs, Sample Papers, NCERT, Class 10, Class 12, Study Material">
+
+  <!-- 🔥 SEO TITLE -->
+  <title>Atom Orbit - Free Study Material for Class 1 to 12</title>
+
+  <!-- 🔥 SEO META -->
+  <meta name="description" content="Download MCQs, Sample Papers, NCERT Solutions, and study material for Class 1 to 12. Free PDFs available on Atom Orbit.">
+  <meta name="keywords" content="MCQs, Sample Papers, NCERT Solutions, Class 10, Class 12, Free Study Material">
   <meta name="author" content="Atom Orbit">
-  <meta property="og:title" content="Atom Orbit">
-  <meta property="og:description" content="Learn smarter with Atom Orbit">
-  <meta property="og:image" content="/static/img/logo.jpeg">
+  <meta name="robots" content="index, follow">
+
+  <!-- 🔥 OPEN GRAPH (FOR WHATSAPP/SHARING) -->
+  <meta property="og:title" content="Atom Orbit - Free Study Material">
+  <meta property="og:description" content="Download free PDFs for Class 1 to 12 - MCQs, Sample Papers & NCERT Solutions.">
+  <meta property="og:image" content="{% static 'img/logo.jpeg' %}">
+  <meta property="og:url" content="https://atom-orbit.onrender.com">
+  <meta property="og:type" content="website">
+
+  <!-- 🔥 FAVICON -->
+  <link rel="icon" type="image/jpeg" href="{% static 'img/logo.ico' %}">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+  <!-- FONT -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
   <div id="loader" class="loader"></div>
@@ -180,11 +195,6 @@ function typeEffect() {
 }
 
 document.addEventListener("DOMContentLoaded", typeEffect);
-</script>
-<script>
-document.addEventListener("contextmenu", function(e) {
-    e.preventDefault();
-});
 </script>
 <script>
 document.onkeydown = function(e) {

@@ -27,7 +27,7 @@
 
       <div class="file-action">
         <!-- ✅ SECURE DOWNLOAD -->
-        <a href="{% url 'secure_download' f.id %}" class="download-btn">
+        <a href="{% url 'secure_download' f.id f.token %}" class="download-btn">
           ⬇ Download
         </a>
 
