@@ -4,6 +4,9 @@ import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 import dj_database_url
+import os
+from django.contrib.auth import get_user_model
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'REPLACE_THIS_WITH_A_SECURE_KEY'
@@ -122,3 +125,14 @@ CLOUDINARY_STORAGE = {
 
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 INSTALLED_APPS += ['cloudinary', 'cloudinary_storage']
+
+
+User = get_user_model()
+
+if os.environ.get("CREATE_SUPERUSER") == "True":
+    if not User.objects.filter(username=os.environ.get("DJANGO_SUPERUSER_USERNAME")).exists():
+        User.objects.create_superuser(
+            username=os.environ.get("DJANGO_SUPERUSER_USERNAME"),
+            email=os.environ.get("DJANGO_SUPERUSER_EMAIL"),
+            password=os.environ.get("DJANGO_SUPERUSER_PASSWORD")
+        )
