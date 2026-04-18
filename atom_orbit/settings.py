@@ -3,6 +3,8 @@ from pathlib import Path
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
+import dj_database_url
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'REPLACE_THIS_WITH_A_SECURE_KEY'
 DEBUG = False
@@ -53,10 +55,7 @@ TEMPLATES = [
 ]
 WSGI_APPLICATION = 'atom_orbit.wsgi.application'
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.parse(os.environ.get("DATABASE_URL"))
 }
 AUTH_PASSWORD_VALIDATORS = []
 LANGUAGE_CODE = 'en-us'
