@@ -126,10 +126,3 @@ DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 INSTALLED_APPS += ['cloudinary', 'cloudinary_storage']
 
 
-if os.environ.get("CREATE_SUPERUSER") == "True":
-    if not User.objects.filter(username=os.environ.get("DJANGO_SUPERUSER_USERNAME")).exists():
-        User.objects.create_superuser(
-            username=os.environ.get("DJANGO_SUPERUSER_USERNAME"),
-            email=os.environ.get("DJANGO_SUPERUSER_EMAIL"),
-            password=os.environ.get("DJANGO_SUPERUSER_PASSWORD")
-        )
