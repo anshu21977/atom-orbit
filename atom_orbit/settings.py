@@ -27,6 +27,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'core',
+    'cloudinary',
+    'cloudinary_storage',
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -116,13 +118,15 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880
 
 # ================= EXTRA SECURITY =================
 SECURE_REFERRER_POLICY = "same-origin"
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': 'dqqdhfvhr',
-    'API_KEY': '615224925723566',
-    'API_SECRET': 'U7pNq9ayeb9wyi7U2G6bHNIpT58',
-}
+import cloudinary
+
+cloudinary.config(
+    cloud_name = "dqqdhfvhr",
+    api_key = "615224925723566",
+    api_secret = "U7pNq9ayeb9wyi7U2G6bHNIpT58"
+)
 
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-INSTALLED_APPS += ['cloudinary', 'cloudinary_storage']
+
 
 
