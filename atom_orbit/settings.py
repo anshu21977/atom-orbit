@@ -1,8 +1,6 @@
 import os
 from pathlib import Path
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
+
 import dj_database_url
 import os
 
@@ -26,9 +24,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'core',
     'cloudinary',
     'cloudinary_storage',
+    'core',
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -119,14 +117,14 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880
 # ================= EXTRA SECURITY =================
 SECURE_REFERRER_POLICY = "same-origin"
 import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
 cloudinary.config(
-    cloud_name = "dqqdhfvhr",
-    api_key = "615224925723566",
-    api_secret = "U7pNq9ayeb9wyi7U2G6bHNIpT58"
+    cloud_name="dqqdhfvhr",
+    api_key="615224925723566",
+    api_secret="U7pNq9ayeb9wyi7U2G6bHNIpT58",
+    secure=True
 )
 
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-
-
-
