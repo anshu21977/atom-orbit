@@ -2,6 +2,8 @@ from django.db import models
 from django.db.models.signals import post_delete, pre_save
 from django.dispatch import receiver
 import os
+from cloudinary.models import CloudinaryField
+
 
 class ClassRoom(models.Model):
     name = models.CharField(max_length=200, unique=True)
@@ -53,7 +55,7 @@ class Achiever(models.Model):
     name = models.CharField(max_length=100)
     class_name = models.CharField(max_length=20)
     score = models.IntegerField()
-    image = models.ImageField(upload_to='achievers/')
+    image = CloudinaryField('image')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -61,7 +63,7 @@ class Achiever(models.Model):
 
 
 # ✅ DELETE FILE WHEN RECORD DELETED
-@receiver(post_delete, sender=PDFFile)
+'''@receiver(post_delete, sender=PDFFile)
 def delete_file_on_delete(sender, instance, **kwargs):
     if instance.file:
         if os.path.isfile(instance.file.path):
@@ -81,4 +83,4 @@ def delete_old_file_on_update(sender, instance, **kwargs):
     new_file = instance.file
     if old_file and old_file != new_file:
         if os.path.isfile(old_file.path):
-            os.remove(old_file.path)
+            os.remove(old_file.path)'''
