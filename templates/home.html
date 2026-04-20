@@ -68,7 +68,12 @@
   <div class="home-achievement-grid">
     {% for student in achievers %}
     <div class="home-achievement-card">
-      <img src="{{ achiever.image.url }}" alt="{{ achiever.name }}">
+      {% if student.image %}
+        <img src="{{ student.image.url }}" alt="{{ student.name }}">
+      {% else %}
+        <img src="{% static 'img/logo.jpeg' %}" alt="default">
+      {% endif %}
+  
       <h3>{{ student.name }}</h3>
       <p>Class {{ student.class_name }}</p>
       <span>{{ student.score }}%</span>
