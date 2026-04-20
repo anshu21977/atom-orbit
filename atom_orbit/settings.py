@@ -7,7 +7,7 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'REPLACE_THIS_WITH_A_SECURE_KEY'
-DEBUG = False
+DEBUG = True
 ALLOWED_HOSTS = ['atom-orbit.onrender.com']
 # Email configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
