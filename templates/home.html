@@ -1,3 +1,4 @@
+{% load static %}
 {% extends 'base.html' %}
 
 {% block content %}
@@ -73,7 +74,7 @@
       {% else %}
         <img src="{% static 'img/logo.jpeg' %}" alt="default">
       {% endif %}
-  
+
       <h3>{{ student.name }}</h3>
       <p>Class {{ student.class_name }}</p>
       <span>{{ student.score }}%</span>

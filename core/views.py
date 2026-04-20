@@ -326,7 +326,7 @@ def secure_download(request, file_id, token):
     return response
 
 
-@cache_page(60 * 5)  # 5 minutes
+#cache_page(60 * 5)  # 5 minutes
 def home(request):
     achievers = Achiever.objects.order_by('-created_at')[:6]
     categories = [

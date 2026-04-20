@@ -138,4 +138,3 @@ cloudinary.config(
 )
 
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-print("CLOUDINARY ACTIVE")
