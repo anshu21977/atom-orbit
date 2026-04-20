@@ -24,7 +24,7 @@ import time
 import hashlib
 from django.conf import settings
 
-def home(request):
+'''def home(request):
     categories = [
         ('mcqs', 'MCQs'),
         ('sample_paper','Sample Papers'),
@@ -39,7 +39,7 @@ def home(request):
     return render(request, 'home.html', {
         'categories': categories,
         'achievers': achievers
-    })
+    })'''
 
 def _num_from_name(s: str) -> int:
     m = re.search(r"\d+", s or "")

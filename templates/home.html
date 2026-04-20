@@ -70,9 +70,9 @@
     {% for student in achievers %}
     <div class="home-achievement-card">
       {% if student.image %}
-        <img src="{{ student.image.url }}" alt="{{ student.name }}">
+        <img src="{{ student.image.url|default:'' }}" alt="{{ student.name }}">
       {% else %}
-        <img src="{% static 'img/logo.jpeg' %}" alt="default">
+        <img src="/static/img/logo.jpeg" alt="default">
       {% endif %}
 
       <h3>{{ student.name }}</h3>
