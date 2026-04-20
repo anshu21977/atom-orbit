@@ -1,21 +1,29 @@
 {% extends 'base.html' %}
+{% load static %}
+
 {% block content %}
 
 <section class="achievements">
   <h2>🏆 All Achievers</h2>
 
-  <div class="achievement-grid">
+  <div class="home-achievement-grid">
     {% for student in achievers %}
-    <div class="achievement-card">
-      <img src="{{ achiever.image.url }}" alt="{{ achiever.name }}">
+    <div class="home-achievement-card">
+
+      {% if student.image and student.image.url %}
+        <img src="{{ student.image.url }}" alt="{{ student.name }}">
+      {% else %}
+        <img src="{% static 'img/logo.jpeg' %}" alt="default">
+      {% endif %}
 
       <h3>{{ student.name }}</h3>
       <p>Class {{ student.class_name }}</p>
-
       <span>{{ student.score }}%</span>
+
     </div>
     {% endfor %}
   </div>
+
 </section>
 
 {% endblock %}
