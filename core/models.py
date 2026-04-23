@@ -36,7 +36,7 @@ class PDFFile(models.Model):
         ('previous_year', 'Previous Year Questions'),    # ✅ ADD
     ]
     title = models.CharField(max_length=255)
-    file = models.FileField(upload_to='pdfs/')
+    file = CloudinaryField(resource_type='raw')
     classroom = models.ForeignKey(ClassRoom, on_delete=models.CASCADE, related_name='files')
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='files', null=True, blank=True)
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='sample_paper')
