@@ -319,6 +319,5 @@ def robots_txt(request):
 
 def generate_token(file_id):
     secret = settings.SECRET_KEY
-    timestamp = str(int(time.time() // 60))  # changes every minute
-    data = f"{file_id}{timestamp}{secret}"
+    data = f"{file_id}{secret}"
     return hashlib.sha256(data.encode()).hexdigest()
