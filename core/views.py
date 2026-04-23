@@ -275,58 +275,30 @@ def all_achievers(request):
         'achievers': achievers
     })
 
+from django.shortcuts import redirect
+from django.http import Http404
 
-
-from django.views.decorators.http import require_GET
-
-@require_GET
-def secure_download(request, file_id):
+def secure_download(request, file_id, token):
     try:
         file = PDFFile.objects.get(id=file_id)
 
-        # increment safely
+        # validate token
+        valid_token = generate_token(file_id)
+        if token != valid_token:
+            raise Http404("Invalid or expired link")
+
+        # increase count safely
         PDFFile.objects.filter(id=file_id).update(
             download_count=F('download_count') + 1
         )
 
-        file_path = file.file.path
-
-        if not os.path.exists(file_path):
-            raise Http404
-
-        # clean filename
-        safe_title = re.sub(r'[^a-zA-Z0-9 ]', '', file.title)
-        filename = f"{safe_title}.pdf"
-
-        response = FileResponse(open(file_path, 'rb'), as_attachment=True)
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
-
-        return response
+        # ✅ Cloudinary redirect (FIX)
+        return redirect(file.file.url)
 
     except PDFFile.DoesNotExist:
-        raise Http404
+        raise Http404("File not found")
 
-
-def secure_download(request, file_id, token):
-    file = PDFFile.objects.get(id=file_id)
-
-    # ✅ validate token
-    valid_token = generate_token(file_id)
-
-    if token != valid_token:
-        raise Http404("Invalid or expired link")
-
-    # ✅ increase count
-    file.download_count += 1
-    file.save()
-
-    response = FileResponse(file.file.open(), content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="{file.title}.pdf"'
-    
-    return response
-
-
-#cache_page(60 * 5)  # 5 minutes
+@cache_page(60 * 5)  # 5 minutes
 def home(request):
     achievers = Achiever.objects.order_by('-created_at')[:6]
     categories = [
