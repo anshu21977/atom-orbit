@@ -6,24 +6,15 @@ from django.utils import timezone
 from django.core.mail import send_mail
 from django.conf import settings
 from django.db.models import Q, F
-from django.http import (
-    HttpResponse, HttpResponseRedirect, Http404, StreamingHttpResponse, JsonResponse
-)
+from django.http import HttpResponse, Http404, StreamingHttpResponse, JsonResponse
 from django.views.decorators.cache import cache_page
 from django.utils.encoding import smart_str
 from django import forms
-
 import re
 import requests
 
 from .models import ClassRoom, Subject, PDFFile, Achiever
-from .utils import generate_token   # ✅ single clean import from utils.py
 
-
-# ---------- HELPERS ----------
-def _num_from_name(s: str) -> int:
-    m = re.search(r"\d+", s or "")
-    return int(m.group()) if m else 0
 
 PRETTY_CATEGORIES = dict(
     mcqs='MCQs',
@@ -34,8 +25,11 @@ PRETTY_CATEGORIES = dict(
     previous_year='Previous Year Questions',
 )
 
+def _num_from_name(s: str) -> int:
+    m = re.search(r"\d+", s or "")
+    return int(m.group()) if m else 0
 
-# ---------- PUBLIC VIEWS ----------
+
 @cache_page(60 * 5)
 def home(request):
     achievers = Achiever.objects.order_by('-created_at')[:6]
@@ -70,7 +64,6 @@ def subject_files(request, category, class_id, subject_id):
     classroom = get_object_or_404(ClassRoom, pk=class_id)
     subject = get_object_or_404(Subject, pk=subject_id)
     files = PDFFile.objects.filter(classroom=classroom, subject=subject, category=category)
-
     return render(request, 'files.html', {
         'classroom': classroom,
         'subject': subject,
@@ -109,7 +102,7 @@ def download_file(request, file_id):
     response["Cache-Control"] = "no-store"
     return response
 
-# ---------- AUTH ----------
+
 def admin_login(request):
     if request.user.is_authenticated and request.user.is_staff:
         return redirect('dashboard')
@@ -134,7 +127,6 @@ def is_admin(user):
     return user.is_authenticated and user.is_staff
 
 
-# ---------- FORMS ----------
 class PDFFileForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -151,7 +143,6 @@ class PDFFileForm(forms.ModelForm):
         fields = ['title', 'category', 'classroom', 'subject', 'file']
 
 
-# ---------- DASHBOARD ----------
 @login_required
 @user_passes_test(is_admin)
 def dashboard(request):
@@ -195,7 +186,6 @@ def delete_pdf(request, pk):
     return render(request, 'dashboard/delete_confirm.html', {'pdf': pdf})
 
 
-# ---------- OTHER ----------
 def contact_view(request):
     if request.method == 'POST':
         name = request.POST.get('name')
@@ -206,9 +196,9 @@ def contact_view(request):
         try:
             send_mail(subject, message_body, settings.DEFAULT_FROM_EMAIL,
                       [settings.EMAIL_HOST_USER], fail_silently=False)
-            messages.success(request, 'Thank you for your message. We will get back to you soon!')
+            messages.success(request, 'Thank you! We will get back to you soon.')
         except Exception:
-            messages.error(request, 'Sorry, there was an error. Please try again later.')
+            messages.error(request, 'Error sending message. Please try again.')
         return redirect('contact')
     return render(request, 'contact.html')
 
