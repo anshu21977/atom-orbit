@@ -6,7 +6,7 @@ import os
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-SECRET_KEY = 'REPLACE_THIS_WITH_A_SECURE_KEY'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'zpke$@t1nh=ut18uoj^u+v8h7o0%54q%v%gp+30=t@%_cpq3m@')
 DEBUG = False
 ALLOWED_HOSTS = ['atom-orbit.onrender.com']
 # Email configuration
@@ -137,4 +137,4 @@ cloudinary.config(
     secure=True
 )
 
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.RawMediaCloudinaryStorage'
