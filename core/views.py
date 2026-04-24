@@ -278,25 +278,21 @@ def all_achievers(request):
 from django.shortcuts import redirect
 from django.http import Http404
 
+from django.http import HttpResponseRedirect
+
 def secure_download(request, file_id, token):
-    try:
-        file = PDFFile.objects.get(id=file_id)
+    file = PDFFile.objects.get(id=file_id)
 
-        # validate token
-        valid_token = generate_token(file_id)
-        if token != valid_token:
-            raise Http404("Invalid or expired link")
+    # validate token
+    if token != generate_token(file_id):
+        raise Http404("Invalid or expired link")
 
-        # increase count safely
-        PDFFile.objects.filter(id=file_id).update(
-            download_count=F('download_count') + 1
-        )
+    # increase count
+    file.download_count += 1
+    file.save()
 
-        # ✅ Cloudinary redirect (FIX)
-        return redirect(file.file.url)
-
-    except PDFFile.DoesNotExist:
-        raise Http404("File not found")
+    # 🔥 REDIRECT to Cloudinary URL (BEST FIX)
+    return HttpResponseRedirect(file.file.url + "?fl_attachment=true")
 
 @cache_page(60 * 5)  # 5 minutes
 def home(request):
