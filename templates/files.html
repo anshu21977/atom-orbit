@@ -27,10 +27,10 @@
 
       <div class="file-action">
         <!-- ✅ SECURE DOWNLOAD -->
-        <a href="{% url 'secure_download' f.id f.token %}" class="download-btn">
+        <a href="{% url 'download_file' f.id %}" class="download-btn">
           ⬇ Download
         </a>
-
+        
         <!-- OPTIONAL DOWNLOAD COUNT -->
         {% if f.download_count %}
           <span>⬇ {{ f.download_count }} downloads</span>

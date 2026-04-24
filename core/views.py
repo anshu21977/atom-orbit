@@ -71,9 +71,6 @@ def subject_files(request, category, class_id, subject_id):
     subject = get_object_or_404(Subject, pk=subject_id)
     files = PDFFile.objects.filter(classroom=classroom, subject=subject, category=category)
 
-    for f in files:
-        f.token = generate_token(f.id)   # attach token for template
-
     return render(request, 'files.html', {
         'classroom': classroom,
         'subject': subject,
@@ -83,29 +80,22 @@ def subject_files(request, category, class_id, subject_id):
     })
 
 
-def secure_download(request, file_id, token):
+def download_file(request, file_id):
     try:
         file = PDFFile.objects.get(id=file_id)
     except PDFFile.DoesNotExist:
         raise Http404("File not found")
 
-    if token != generate_token(file_id):
-        raise Http404("Invalid or expired link")
-
     PDFFile.objects.filter(id=file_id).update(download_count=F('download_count') + 1)
 
-    # Build the raw Cloudinary URL — NO fl_attachment, we proxy it ourselves
-    cloudinary_url = file.file.url
-    # Strip any accidental query params
-    cloudinary_url = cloudinary_url.split("?")[0]
+    cloudinary_url = file.file.url.split("?")[0]
 
     try:
         r = requests.get(cloudinary_url, stream=True, timeout=30)
         r.raise_for_status()
-    except requests.RequestException as e:
-        raise Http404(f"Could not fetch file from storage: {e}")
+    except requests.RequestException:
+        raise Http404("Could not fetch file")
 
-    # Clean filename
     filename = cloudinary_url.split("/")[-1]
     if not filename.lower().endswith(".pdf"):
         filename += ".pdf"
@@ -118,7 +108,6 @@ def secure_download(request, file_id, token):
     response["X-Content-Type-Options"] = "nosniff"
     response["Cache-Control"] = "no-store"
     return response
-
 
 # ---------- AUTH ----------
 def admin_login(request):

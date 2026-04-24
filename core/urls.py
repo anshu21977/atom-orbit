@@ -8,8 +8,6 @@ urlpatterns = [
     path('category/<str:category>/class/<int:class_id>/subject/<int:subject_id>/', views.subject_files, name='subject_files'),
     path('contact/', views.contact_view, name='contact'),
     path('search/', views.search_files, name='search'),
-
-    # Custom admin dashboard routes
     path('admin-login/', views.admin_login, name='admin_login'),
     path('logout/', views.admin_logout, name='admin_logout'),
     path('dashboard/', views.dashboard, name='dashboard'),
@@ -20,6 +18,6 @@ urlpatterns = [
     path('files/<int:id>/', views.file_detail, name='file_detail'),
     path('load-subjects/', views.load_subjects, name='load_subjects'),
     path('achievers/', views.all_achievers, name='all_achievers'),
-    path('download/<int:file_id>/<str:token>/', views.secure_download, name='secure_download'),
-    path("robots.txt", views.robots_txt),
+    path('download/<int:file_id>/', views.download_file, name='download_file'),  # ← simplified
+    path('robots.txt', views.robots_txt),
 ]
