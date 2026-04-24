@@ -280,19 +280,33 @@ from django.http import Http404
 
 from django.http import HttpResponseRedirect
 
-def secure_download(request, file_id, token):
-    file = PDFFile.objects.get(id=file_id)
+import re
+from django.http import HttpResponseRedirect, Http404
+from .models import PDFFile
+from .utils import generate_token
 
-    # validate token
+def secure_download(request, file_id, token):
+    try:
+        file = PDFFile.objects.get(id=file_id)
+    except PDFFile.DoesNotExist:
+        raise Http404("File not found")
+
     if token != generate_token(file_id):
         raise Http404("Invalid or expired link")
 
-    # increase count
     file.download_count += 1
     file.save()
 
-    # 🔥 REDIRECT to Cloudinary URL (BEST FIX)
-    return HttpResponseRedirect(file.file.url + "?fl_attachment=true")
+    raw_url = file.file.url  # e.g. .../raw/upload/v123/file.pdf
+
+    # Inject fl_attachment into the URL path (correct Cloudinary syntax)
+    download_url = re.sub(
+        r'(/raw/upload/)',
+        r'\1fl_attachment/',
+        raw_url
+    )
+
+    return HttpResponseRedirect(download_url)
 
 @cache_page(60 * 5)  # 5 minutes
 def home(request):
