@@ -3,109 +3,122 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.utils import timezone
-from .models import ClassRoom, Subject, PDFFile
-from django import forms
 from django.core.mail import send_mail
 from django.conf import settings
-from django.db.models import Q
-import re   
-from django.http import FileResponse
-from .models import PDFFile
-from django.http import JsonResponse
-from .models import Achiever
-from django.http import JsonResponse
-from .models import Subject
-from django.http import FileResponse, Http404
-import os
-from django.db.models import F
+from django.db.models import Q, F
+from django.http import (
+    HttpResponse, HttpResponseRedirect, Http404, StreamingHttpResponse, JsonResponse
+)
 from django.views.decorators.cache import cache_page
-from django.http import HttpResponse
-import time
-import hashlib
-from django.conf import settings
+from django.utils.encoding import smart_str
+from django import forms
 
-'''def home(request):
-    categories = [
-        ('mcqs', 'MCQs'),
-        ('sample_paper','Sample Papers'),
-        ('ncert_solutions','NCERT Solutions'),
-        ('ncert_textbook','NCERT Textbooks'),
-        ('extra_questions', 'Extra Questions'),
-        ('previous_year', 'Previous Year Questions'),
-    ]
+import re
+import requests
 
-    achievers = Achiever.objects.order_by('-created_at')[:6]
+from .models import ClassRoom, Subject, PDFFile, Achiever
+from .utils import generate_token   # ✅ single clean import from utils.py
 
-    return render(request, 'home.html', {
-        'categories': categories,
-        'achievers': achievers
-    })'''
 
+# ---------- HELPERS ----------
 def _num_from_name(s: str) -> int:
     m = re.search(r"\d+", s or "")
     return int(m.group()) if m else 0
 
+PRETTY_CATEGORIES = dict(
+    mcqs='MCQs',
+    sample_paper='Sample Papers',
+    ncert_solutions='NCERT Solutions',
+    ncert_textbook='NCERT Textbooks',
+    extra_questions='Extra Questions',
+    previous_year='Previous Year Questions',
+)
+
+
+# ---------- PUBLIC VIEWS ----------
+@cache_page(60 * 5)
+def home(request):
+    achievers = Achiever.objects.order_by('-created_at')[:6]
+    categories = list(PRETTY_CATEGORIES.items())
+    return render(request, 'home.html', {
+        'achievers': achievers,
+        'categories': categories,
+    })
+
+
 def category_view(request, category):
-    classes_qs = ClassRoom.objects.all()
-
-    # >>> Sorting happens here <<<
-    classes = sorted(classes_qs, key=lambda c: (_num_from_name(c.name), c.name))
-
-    pretty = dict(
-        mcqs='MCQs',
-        sample_paper='Sample Papers',
-        ncert_solutions='NCERT Solutions',
-        ncert_textbook='NCERT Textbooks',
-        extra_questions='Extra Questions',              # ✅ ADD
-        previous_year='Previous Year Questions',        # ✅ ADD
-    ).get(category, category)
-
+    classes = sorted(ClassRoom.objects.all(), key=lambda c: (_num_from_name(c.name), c.name))
     return render(request, 'category.html', {
         'classes': classes,
         'category': category,
-        'pretty': pretty
+        'pretty': PRETTY_CATEGORIES.get(category, category),
     })
 
 
 def class_subjects(request, category, class_id):
     classroom = get_object_or_404(ClassRoom, pk=class_id)
     subjects = Subject.objects.filter(classroom=classroom).order_by('name')
-    pretty = dict(
-        mcqs='MCQs',
-        sample_paper='Sample Papers',
-        ncert_solutions='NCERT Solutions',
-        ncert_textbook='NCERT Textbooks',
-        extra_questions='Extra Questions',              # ✅ ADD
-        previous_year='Previous Year Questions',        # ✅ ADD
-    ).get(category, category)
-    return render(request,'subjects.html',{'classroom':classroom,'subjects':subjects,'category':category,'pretty':pretty})
+    return render(request, 'subjects.html', {
+        'classroom': classroom,
+        'subjects': subjects,
+        'category': category,
+        'pretty': PRETTY_CATEGORIES.get(category, category),
+    })
+
 
 def subject_files(request, category, class_id, subject_id):
     classroom = get_object_or_404(ClassRoom, pk=class_id)
     subject = get_object_or_404(Subject, pk=subject_id)
-
     files = PDFFile.objects.filter(classroom=classroom, subject=subject, category=category)
 
-    # 🔥 ADD TOKEN TO EACH FILE
     for f in files:
-        f.token = generate_token(f.id)
+        f.token = generate_token(f.id)   # attach token for template
 
-    pretty = dict(
-        mcqs='MCQs',
-        sample_paper='Sample Papers',
-        ncert_solutions='NCERT Solutions',
-        ncert_textbook='NCERT Textbooks',
-        extra_questions='Extra Questions',
-        previous_year='Previous Year Questions',
-    ).get(category, category)
-
-    return render(request,'files.html',{
-        'classroom':classroom,
-        'subject':subject,
-        'files':files,
-        'category':category,
-        'pretty':pretty
+    return render(request, 'files.html', {
+        'classroom': classroom,
+        'subject': subject,
+        'files': files,
+        'category': category,
+        'pretty': PRETTY_CATEGORIES.get(category, category),
     })
+
+
+def secure_download(request, file_id, token):
+    try:
+        file = PDFFile.objects.get(id=file_id)
+    except PDFFile.DoesNotExist:
+        raise Http404("File not found")
+
+    if token != generate_token(file_id):
+        raise Http404("Invalid or expired link")
+
+    PDFFile.objects.filter(id=file_id).update(download_count=F('download_count') + 1)
+
+    # Build the raw Cloudinary URL — NO fl_attachment, we proxy it ourselves
+    cloudinary_url = file.file.url
+    # Strip any accidental query params
+    cloudinary_url = cloudinary_url.split("?")[0]
+
+    try:
+        r = requests.get(cloudinary_url, stream=True, timeout=30)
+        r.raise_for_status()
+    except requests.RequestException as e:
+        raise Http404(f"Could not fetch file from storage: {e}")
+
+    # Clean filename
+    filename = cloudinary_url.split("/")[-1]
+    if not filename.lower().endswith(".pdf"):
+        filename += ".pdf"
+
+    response = StreamingHttpResponse(
+        r.iter_content(chunk_size=8192),
+        content_type="application/pdf",
+    )
+    response["Content-Disposition"] = f'attachment; filename="{smart_str(filename)}"'
+    response["X-Content-Type-Options"] = "nosniff"
+    response["Cache-Control"] = "no-store"
+    return response
+
 
 # ---------- AUTH ----------
 def admin_login(request):
@@ -122,33 +135,40 @@ def admin_login(request):
             messages.error(request, 'Invalid credentials or not an admin user.')
     return render(request, 'login.html')
 
+
 def admin_logout(request):
     logout(request)
     return redirect('admin_login')
 
+
 def is_admin(user):
     return user.is_authenticated and user.is_staff
+
 
 # ---------- FORMS ----------
 class PDFFileForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
-        super(PDFFileForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['classroom'].queryset = self.fields['classroom'].queryset.order_by('name')
         if 'classroom' in self.initial:
-            self.fields['subject'].queryset = Subject.objects.filter(classroom=self.initial['classroom']).order_by('name')
+            self.fields['subject'].queryset = Subject.objects.filter(
+                classroom=self.initial['classroom']
+            ).order_by('name')
         else:
             self.fields['subject'].queryset = Subject.objects.none()
-        
+
     class Meta:
         model = PDFFile
-        fields = ['title','category','classroom','subject','file']
+        fields = ['title', 'category', 'classroom', 'subject', 'file']
+
 
 # ---------- DASHBOARD ----------
 @login_required
 @user_passes_test(is_admin)
 def dashboard(request):
     files = PDFFile.objects.select_related('classroom', 'subject').order_by('-uploaded_at')
-    return render(request,'dashboard/dashboard.html',{'files':files})
+    return render(request, 'dashboard/dashboard.html', {'files': files})
+
 
 @login_required
 @user_passes_test(is_admin)
@@ -162,6 +182,7 @@ def upload_pdf(request):
         return redirect('dashboard')
     return render(request, 'dashboard/upload.html', {'form': form})
 
+
 @login_required
 @user_passes_test(is_admin)
 def edit_pdf(request, pk):
@@ -173,6 +194,7 @@ def edit_pdf(request, pk):
         return redirect('dashboard')
     return render(request, 'dashboard/edit.html', {'form': form, 'pdf': pdf})
 
+
 @login_required
 @user_passes_test(is_admin)
 def delete_pdf(request, pk):
@@ -183,82 +205,52 @@ def delete_pdf(request, pk):
         return redirect('dashboard')
     return render(request, 'dashboard/delete_confirm.html', {'pdf': pdf})
 
+
+# ---------- OTHER ----------
 def contact_view(request):
     if request.method == 'POST':
         name = request.POST.get('name')
         email = request.POST.get('email')
         message = request.POST.get('message')
-        
-        # Prepare email content
         subject = f"New Contact Form Submission from {name}"
-        message_body = f"""
-        Name: {name}
-        Email: {email}
-        Message: {message}
-        """
-        
+        message_body = f"Name: {name}\nEmail: {email}\nMessage: {message}"
         try:
-            # Send email
-            send_mail(
-                subject,
-                message_body,
-                settings.DEFAULT_FROM_EMAIL,
-                [settings.EMAIL_HOST_USER],
-                fail_silently=False,
-            )
+            send_mail(subject, message_body, settings.DEFAULT_FROM_EMAIL,
+                      [settings.EMAIL_HOST_USER], fail_silently=False)
             messages.success(request, 'Thank you for your message. We will get back to you soon!')
-        except Exception as e:
-            messages.error(request, 'Sorry, there was an error sending your message. Please try again later.')
-        
+        except Exception:
+            messages.error(request, 'Sorry, there was an error. Please try again later.')
         return redirect('contact')
-    
     return render(request, 'contact.html')
 
 
 def search_files(request):
     query = request.GET.get('q')
     files = None
-
-    categories = [
-        ('mcqs', 'MCQs'),
-        ('sample_paper', 'Sample Papers'),
-        ('ncert_solutions', 'NCERT Solutions'),
-        ('ncert_textbook', 'NCERT Textbooks'),
-        ('extra_questions', 'Extra Questions'),
-        ('previous_year', 'Previous Year Questions'),
-    ]
-
     if query:
         files = PDFFile.objects.filter(
-            Q(title__icontains=query) | 
+            Q(title__icontains=query) |
             Q(classroom__name__icontains=query) |
             Q(subject__name__icontains=query)
         ).select_related('classroom', 'subject').order_by('-uploaded_at')
-
     return render(request, 'search_results.html', {
         'files': files,
         'query': query,
-        'categories': categories
+        'categories': list(PRETTY_CATEGORIES.items()),
     })
 
 
 def live_search(request):
     query = request.GET.get('q', '')
     results = []
-
     if query:
-        files = PDFFile.objects.filter(title__icontains=query)[:5]
-
-        for f in files:
-            results.append({
-                'title': f.title,
-                'url': f"/files/{f.id}/"   # 👈 custom page URL
-            })
-
+        for f in PDFFile.objects.filter(title__icontains=query)[:5]:
+            results.append({'title': f.title, 'url': f"/files/{f.id}/"})
     return JsonResponse(results, safe=False)
 
+
 def file_detail(request, id):
-    file = PDFFile.objects.get(id=id)
+    file = get_object_or_404(PDFFile, id=id)
     return render(request, 'file_detail.html', {'file': file})
 
 
@@ -268,66 +260,10 @@ def load_subjects(request):
     return JsonResponse(list(subjects), safe=False)
 
 
-
 def all_achievers(request):
-    achievers = Achiever.objects.order_by('-created_at')  # ✅ latest first
-    return render(request, 'achievers.html', {
-        'achievers': achievers
-    })
+    achievers = Achiever.objects.order_by('-created_at')
+    return render(request, 'achievers.html', {'achievers': achievers})
 
-from django.shortcuts import redirect
-from django.http import Http404
-
-from django.http import HttpResponseRedirect
-
-import re
-from django.http import HttpResponseRedirect, Http404
-from .models import PDFFile
-from .utils import generate_token
-
-def secure_download(request, file_id, token):
-    try:
-        file = PDFFile.objects.get(id=file_id)
-    except PDFFile.DoesNotExist:
-        raise Http404("File not found")
-
-    if token != generate_token(file_id):
-        raise Http404("Invalid or expired link")
-
-    file.download_count += 1
-    file.save()
-
-    raw_url = file.file.url  # e.g. .../raw/upload/v123/file.pdf
-
-    # Inject fl_attachment into the URL path (correct Cloudinary syntax)
-    download_url = re.sub(
-        r'(/raw/upload/)',
-        r'\1fl_attachment/',
-        raw_url
-    )
-
-    return HttpResponseRedirect(download_url)
-
-@cache_page(60 * 5)  # 5 minutes
-def home(request):
-    achievers = Achiever.objects.order_by('-created_at')[:6]
-    categories = [
-        ('mcqs', 'MCQs'),
-        ('sample_paper','Sample Papers'),
-        ('ncert_solutions','NCERT Solutions'),
-        ('ncert_textbook','NCERT Textbooks'),
-        ('extra_questions', 'Extra Questions'),
-        ('previous_year', 'Previous Year Questions'),
-    ]
-    return render(request,'home.html',{
-        'achievers': achievers,
-        'categories': categories
-    })
 
 def robots_txt(request):
     return HttpResponse("User-agent: *\nAllow: /", content_type="text/plain")
-
-def generate_token(file_id):
-    secret = settings.SECRET_KEY
-    data = f"{file_id}{secret}"
-    return hashlib.sha256(data.encode()).hexdigest()
